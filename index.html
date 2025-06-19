@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USDHL (Wrapped $M Bridge)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .title {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            font-size: 32px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .approval-card {
+            border-left: 4px solid #f093fb;
+        }
+
+        .bridge-card {
+            border-left: 4px solid #4facfe;
+        }
+
+        .card h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .wallet-section {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .connect-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .connect-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .wallet-info {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            border-left: 4px solid #4facfe;
+        }
+
+        .approval-info {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #2c5282;
+            border-left: 4px solid #4299e1;
+        }
+
+        .approval-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .approval-status.approved {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .approval-status.needs-approval {
+            background: #fef5e7;
+            color: #744210;
+        }
+
+        .approve-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+        }
+
+        .approve-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+        }
+
+        .approve-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        input:read-only {
+            background: #f7fafc;
+            color: #718096;
+        }
+
+        .balance-info {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        .bridge-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .bridge-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .bridge-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        .status.loading {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+
+        .contract-info {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        .contract-info code {
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', monospace;
+        }
+
+        .max-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .amount-container {
+            position: relative;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">🌉 USDHL (Wrapped $M Bridge)</h1>
+    
+    <!-- Wallet Connection Card -->
+    <div class="card">
+        <div class="wallet-section">
+            <button id="connectWallet" class="connect-btn">Connect Wallet</button>
+            <div id="walletInfo" class="wallet-info" style="display: none;">
+                <div><strong>Address:</strong> <span id="walletAddress"></span></div>
+                <div><strong>Network:</strong> <span id="networkName"></span></div>
+                <div><strong>Wrapped $M Balance:</strong> <span id="tokenBalance">Loading...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Card -->
+    <div class="card approval-card" id="approvalCard" style="display: none;">
+        <h2>🔐 Step 1: Token Approval</h2>
+        <div class="approval-info">
+            Before bridging, you need to approve the bridge contract to spend your Wrapped $M tokens.
+            <br><strong>Wrapped $M Contract:</strong> <code>0x437cc33344a0B27A429f795ff6B469C72698B291</code>
+            <br><strong>Bridge Contract:</strong> <code>0x36f586A30502AE3afb555b8aA4dCc05d233c2ecE</code>
+        </div>
+        
+        <div id="approvalStatus" class="approval-status needs-approval">
+            <span>⚠️</span>
+            <span>Checking approval status...</span>
+        </div>
+        
+        <button id="approveBtn" class="approve-btn" disabled>
+            Checking Approval Status...
+        </button>
+    </div>
+
+    <!-- Bridge Card -->
+    <div class="card bridge-card" id="bridgeCard" style="display: none;">
+        <h2>🌉 Step 2: Bridge Tokens</h2>
+        
+        <div class="contract-info">
+            <strong>Bridge Contract:</strong> <code>0x36f586A30502AE3afb555b8aA4dCc05d233c2ecE</code><br>
+            <strong>Route:</strong> Ethereum → HyperEVM
+        </div>
+
+        <form id="bridgeForm">
+            <div class="form-group amount-container">
+                <label for="amount">Amount (Wrapped $M)</label>
+                <input type="number" id="amount" step="0.000001" min="0" placeholder="Enter amount">
+                <button type="button" id="maxBtn" class="max-btn" style="display: none;">MAX</button>
+                <div class="balance-info">6 decimals precision (1 $M = 1,000,000 units)</div>
+            </div>
+
+            <div class="form-group">
+                <label for="sourceToken">Source Token (Wrapped $M on Ethereum)</label>
+                <input type="text" id="sourceToken" value="0x437cc33344a0B27A429f795ff6B469C72698B291" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="destinationChainId">Destination Chain ID</label>
+                <input type="number" id="destinationChainId" value="999" readonly>
+                <div class="balance-info">HyperEVM</div>
+            </div>
+
+            <div class="form-group">
+                <label for="destinationToken">Destination Token (USDhl on HyperEVM)</label>
+                <input type="text" id="destinationToken" value="0xb50A96253aBDF803D85efcDce07Ad8becBc52BD5" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="recipient">Recipient Address</label>
+                <input type="text" id="recipient" placeholder="Will be filled with your wallet address">
+            </div>
+
+            <div class="form-group">
+                <label for="refundAddress">Refund Address</label>
+                <input type="text" id="refundAddress" placeholder="Will be filled with your wallet address">
+            </div>
+
+            <div class="form-group">
+                <label for="ethAmount">ETH Amount (Delivery Fee)</label>
+                <input type="number" id="ethAmount" value="0.0008" step="0.0001" min="0">
+                <div class="balance-info">Pre-filled with 0.0008 ETH</div>
+            </div>
+
+            <button type="submit" id="bridgeBtn" class="bridge-btn" disabled>Approve Tokens First</button>
+        </form>
+    </div>
+
+    <div id="status" class="status" style="display: none;"></div>
+
+    <script>
+        // Contract configuration
+        const CONTRACT_ADDRESS = '0x36f586A30502AE3afb555b8aA4dCc05d233c2ecE';
+        const WRAPPED_M_ADDRESS = '0x437cc33344a0B27A429f795ff6B469C72698B291';
+        
+        // Contract ABI (minimal for our needs)
+        const CONTRACT_ABI = [
+            {
+                "inputs": [
+                    {"name": "amount", "type": "uint256"},
+                    {"name": "sourceToken", "type": "address"},
+                    {"name": "destinationChainId", "type": "uint256"},
+                    {"name": "destinationToken", "type": "address"},
+                    {"name": "recipient", "type": "address"},
+                    {"name": "refundAddress", "type": "address"}
+                ],
+                "name": "transferMLikeToken",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+            }
+        ];
+
+        // ERC20 ABI for balance checking and approval
+        const ERC20_ABI = [
+            {
+                "constant": true,
+                "inputs": [{"name": "_owner", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "balance", "type": "uint256"}],
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [],
+                "name": "decimals",
+                "outputs": [{"name": "", "type": "uint8"}],
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [{"name": "_owner", "type": "address"}, {"name": "_spender", "type": "address"}],
+                "name": "allowance",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "type": "function"
+            },
+            {
+                "constant": false,
+                "inputs": [{"name": "_spender", "type": "address"}, {"name": "_value", "type": "uint256"}],
+                "name": "approve",
+                "outputs": [{"name": "", "type": "bool"}],
+                "type": "function"
+            }
+        ];
+
+        let provider, signer, contract, tokenContract, userAddress, currentBalance;
+
+        // DOM elements
+        const connectWalletBtn = document.getElementById('connectWallet');
+        const walletInfo = document.getElementById('walletInfo');
+        const walletAddress = document.getElementById('walletAddress');
+        const networkName = document.getElementById('networkName');
+        const tokenBalance = document.getElementById('tokenBalance');
+        const bridgeForm = document.getElementById('bridgeForm');
+        const bridgeBtn = document.getElementById('bridgeBtn');
+        const maxBtn = document.getElementById('maxBtn');
+        const status = document.getElementById('status');
+        const amountInput = document.getElementById('amount');
+        const recipientInput = document.getElementById('recipient');
+        const refundAddressInput = document.getElementById('refundAddress');
+        const approvalCard = document.getElementById('approvalCard');
+        const bridgeCard = document.getElementById('bridgeCard');
+        const approveBtn = document.getElementById('approveBtn');
+        const approvalStatus = document.getElementById('approvalStatus');
+
+        // Network switching function
+        async function switchToEthereum() {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0x1' }], // Ethereum mainnet
+                });
+                return true;
+            } catch (error) {
+                console.error('Error switching to Ethereum:', error);
+                return false;
+            }
+        }
+
+        // Connect wallet
+        connectWalletBtn.addEventListener('click', async () => {
+            try {
+                if (typeof window.ethereum === 'undefined') {
+                    showStatus('Please install MetaMask or another Web3 wallet', 'error');
+                    return;
+                }
+
+                showStatus('Connecting wallet...', 'loading');
+                
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+
+                // Get network info
+                const network = await provider.getNetwork();
+                
+                // Check if connected to Ethereum mainnet
+                if (network.chainId !== 1) {
+                    showStatus('Wrong network detected. Please switch to Ethereum mainnet...', 'loading');
+                    
+                    const switched = await switchToEthereum();
+                    if (!switched) {
+                        showStatus('Please manually switch to Ethereum mainnet in your wallet', 'error');
+                        return;
+                    }
+                    
+                    // Refresh provider after network switch
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    const newNetwork = await provider.getNetwork();
+                    
+                    if (newNetwork.chainId !== 1) {
+                        showStatus('Still not connected to Ethereum mainnet. Please switch networks manually.', 'error');
+                        return;
+                    }
+                }
+
+                // Initialize contracts
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                tokenContract = new ethers.Contract(WRAPPED_M_ADDRESS, ERC20_ABI, provider);
+
+                // Map network names to user-friendly names
+                const networkNames = {
+                    'homestead': 'Ethereum Mainnet',
+                    'goerli': 'Goerli Testnet',
+                    'sepolia': 'Sepolia Testnet',
+                    'matic': 'Polygon',
+                    'maticmum': 'Polygon Mumbai',
+                    'arbitrum': 'Arbitrum One',
+                    'optimism': 'Optimism'
+                };
+                
+                const friendlyNetworkName = networkNames[network.name] || network.name || `Chain ID: ${network.chainId}`;
+                
+                // Update UI
+                walletAddress.textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+                networkName.textContent = friendlyNetworkName;
+                
+                // Pre-fill recipient and refund addresses
+                recipientInput.value = userAddress;
+                refundAddressInput.value = userAddress;
+
+                // Show wallet info and update button
+                walletInfo.style.display = 'block';
+                approvalCard.style.display = 'block';
+                connectWalletBtn.textContent = 'Wallet Connected ✓';
+                connectWalletBtn.disabled = true;
+                maxBtn.style.display = 'block';
+
+                // Load token balance and check approval
+                await loadTokenBalance();
+                await checkApprovalStatus();
+                
+                hideStatus();
+
+            } catch (error) {
+                console.error('Error connecting wallet:', error);
+                showStatus(`Failed to connect wallet: ${error.message}`, 'error');
+            }
+        });
+
+        // Load token balance
+        async function loadTokenBalance() {
+            try {
+                currentBalance = await tokenContract.balanceOf(userAddress);
+                const decimals = 6; // Wrapped $M uses 6 decimals
+                const balanceFormatted = ethers.utils.formatUnits(currentBalance, decimals);
+                tokenBalance.textContent = `${parseFloat(balanceFormatted).toFixed(6)} $M`;
+                
+                // Pre-fill amount with current balance if it's reasonable
+                const balanceNum = parseFloat(balanceFormatted);
+                if (balanceNum > 0) {
+                    amountInput.value = balanceFormatted;
+                }
+            } catch (error) {
+                console.error('Error loading token balance:', error);
+                tokenBalance.textContent = 'Error loading balance';
+            }
+        }
+
+        // Check approval status
+        async function checkApprovalStatus() {
+            try {
+                const allowance = await tokenContract.allowance(userAddress, CONTRACT_ADDRESS);
+                
+                console.log('Current balance:', ethers.utils.formatUnits(currentBalance, 6));
+                console.log('Current allowance:', ethers.utils.formatUnits(allowance, 6));
+                
+                if (allowance.gte(currentBalance) && currentBalance.gt(0)) {
+                    // Sufficient approval
+                    approvalStatus.className = 'approval-status approved';
+                    approvalStatus.innerHTML = '<span>✅</span><span>Approved! You can now bridge your tokens</span>';
+                    approveBtn.textContent = 'Approval Complete ✓';
+                    approveBtn.disabled = true;
+                    bridgeCard.style.display = 'block';
+                    bridgeBtn.disabled = false;
+                    bridgeBtn.textContent = 'Bridge Tokens';
+                } else if (currentBalance.eq(0)) {
+                    // No tokens to approve
+                    approvalStatus.className = 'approval-status needs-approval';
+                    approvalStatus.innerHTML = '<span>⚠️</span><span>No Wrapped $M tokens found in wallet</span>';
+                    approveBtn.textContent = 'No Tokens to Approve';
+                    approveBtn.disabled = true;
+                } else {
+                    // Needs approval
+                    approvalStatus.className = 'approval-status needs-approval';
+                    approvalStatus.innerHTML = '<span>⚠️</span><span>Approval needed to proceed with bridging</span>';
+                    approveBtn.textContent = 'Approve Wrapped $M Spending';
+                    approveBtn.disabled = false;
+                    bridgeBtn.disabled = true;
+                    bridgeBtn.textContent = 'Approve Tokens First';
+                }
+            } catch (error) {
+                console.error('Error checking approval status:', error);
+                approvalStatus.className = 'approval-status needs-approval';
+                approvalStatus.innerHTML = '<span>❌</span><span>Error checking approval status</span>';
+            }
+        }
+
+        // Handle approval
+        approveBtn.addEventListener('click', async () => {
+            try {
+                showStatus('Preparing approval transaction...', 'loading');
+                approveBtn.disabled = true;
+                approveBtn.textContent = 'Processing...';
+
+                if (currentBalance.eq(0)) {
+                    throw new Error('No Wrapped $M tokens to approve');
+                }
+
+                // Create contract instance with signer for write operations
+                const tokenContractWithSigner = new ethers.Contract(WRAPPED_M_ADDRESS, ERC20_ABI, signer);
+                
+                showStatus('Sending approval transaction...', 'loading');
+
+                // Approve the full balance
+                const tx = await tokenContractWithSigner.approve(CONTRACT_ADDRESS, currentBalance);
+                
+                showStatus('Approval transaction sent! Waiting for confirmation...', 'loading');
+
+                // Wait for transaction confirmation
+                const receipt = await tx.wait();
+                
+                showStatus('Approval successful! You can now bridge your tokens.', 'success');
+                
+                // Refresh approval status
+                await checkApprovalStatus();
+
+            } catch (error) {
+                console.error('Approval error:', error);
+                let errorMessage = 'Approval failed';
+                
+                if (error.code === 4001) {
+                    errorMessage = 'Approval rejected by user';
+                } else if (error.message.includes('insufficient funds')) {
+                    errorMessage = 'Insufficient ETH for gas fees';
+                } else if (error.reason) {
+                    errorMessage = error.reason;
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                showStatus(errorMessage, 'error');
+                
+                // Reset button
+                approveBtn.disabled = false;
+                approveBtn.textContent = 'Approve Wrapped $M Spending';
+            }
+        });
+
+        // Max button functionality
+        maxBtn.addEventListener('click', async () => {
+            try {
+                const decimals = 6;
+                const balanceFormatted = ethers.utils.formatUnits(currentBalance, decimals);
+                amountInput.value = balanceFormatted;
+            } catch (error) {
+                console.error('Error setting max amount:', error);
+                showStatus('Error getting max balance', 'error');
+            }
+        });
+
+        // Handle form submission
+        bridgeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!signer) {
+                showStatus('Please connect your wallet first', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Preparing transaction...', 'loading');
+                bridgeBtn.disabled = true;
+                bridgeBtn.textContent = 'Processing...';
+
+                // Get form values
+                const amount = document.getElementById('amount').value;
+                const sourceToken = document.getElementById('sourceToken').value;
+                const destinationChainId = document.getElementById('destinationChainId').value;
+                const destinationToken = document.getElementById('destinationToken').value;
+                const recipient = document.getElementById('recipient').value;
+                const refundAddress = document.getElementById('refundAddress').value;
+                const ethAmount = document.getElementById('ethAmount').value;
+
+                // Basic validation
+                if (!amount || parseFloat(amount) <= 0) {
+                    throw new Error('Please enter a valid amount');
+                }
+
+                if (!ethers.utils.isAddress(recipient)) {
+                    throw new Error('Invalid recipient address');
+                }
+
+                if (!ethers.utils.isAddress(refundAddress)) {
+                    throw new Error('Invalid refund address');
+                }
+
+                // Convert amount to proper units (6 decimals)
+                const amountWei = ethers.utils.parseUnits(amount, 6);
+                const ethAmountWei = ethers.utils.parseEther(ethAmount);
+
+                showStatus('Sending transaction...', 'loading');
+
+                // Send transaction
+                const tx = await contract.transferMLikeToken(
+                    amountWei,
+                    sourceToken,
+                    destinationChainId,
+                    destinationToken,
+                    recipient,
+                    refundAddress,
+                    { value: ethAmountWei }
+                );
+
+                showStatus('Transaction sent! Waiting for confirmation...', 'loading');
+
+                // Wait for transaction confirmation
+                const receipt = await tx.wait();
+                
+                showStatus(`Bridge successful! Transaction hash: ${receipt.transactionHash}`, 'success');
+                
+                // Reload balance and check approval status
+                await loadTokenBalance();
+                await checkApprovalStatus();
+
+            } catch (error) {
+                console.error('Bridge error:', error);
+                let errorMessage = 'Bridge failed';
+                
+                if (error.code === 4001) {
+                    errorMessage = 'Transaction rejected by user';
+                } else if (error.message.includes('insufficient funds')) {
+                    errorMessage = 'Insufficient funds for transaction';
+                } else if (error.reason) {
+                    errorMessage = error.reason;
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                showStatus(errorMessage, 'error');
+            } finally {
+                bridgeBtn.disabled = false;
+                bridgeBtn.textContent = 'Bridge Tokens';
+            }
+        });
+
+        // Status management
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    hideStatus();
+                }, 10000);
+            }
+        }
+
+        function hideStatus() {
+            status.style.display = 'none';
+        }
+
+        // Handle account and network changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    // User disconnected
+                    location.reload();
+                } else {
+                    // Account changed
+                    location.reload();
+                }
+            });
+
+            window.ethereum.on('chainChanged', async (chainId) => {
+                const newChainId = parseInt(chainId, 16);
+                if (newChainId !== 1) {
+                    showStatus('Wrong network! Please switch to Ethereum mainnet', 'error');
+                    // Disable bridge functionality
+                    bridgeBtn.disabled = true;
+                    bridgeBtn.textContent = 'Switch to Ethereum Mainnet';
+                } else {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
