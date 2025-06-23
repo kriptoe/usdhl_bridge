@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USDHL (Wrapped $M Bridge)</title>
+    <title>Wrapped $M Bridge</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         * {
@@ -17,46 +17,28 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            gap: 20px;
         }
 
-        .title {
-            text-align: center;
-            color: white;
-            margin-bottom: 20px;
-            font-size: 32px;
-            font-weight: 700;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .card {
+        .container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            padding: 30px;
+            padding: 40px;
             width: 100%;
             max-width: 500px;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .approval-card {
-            border-left: 4px solid #f093fb;
-        }
-
-        .bridge-card {
-            border-left: 4px solid #4facfe;
-        }
-
-        .card h2 {
+        h1 {
+            text-align: center;
             color: #2d3748;
-            margin-bottom: 20px;
-            font-size: 20px;
-            font-weight: 600;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 700;
         }
 
         .wallet-section {
@@ -95,62 +77,6 @@
             border-radius: 12px;
             margin-top: 15px;
             border-left: 4px solid #4facfe;
-        }
-
-        .approval-info {
-            background: #f0f8ff;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            color: #2c5282;
-            border-left: 4px solid #4299e1;
-        }
-
-        .approval-status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
-        .approval-status.approved {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-
-        .approval-status.needs-approval {
-            background: #fef5e7;
-            color: #744210;
-        }
-
-        .approve-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
-        }
-
-        .approve-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
-        }
-
-        .approve-btn:disabled {
-            background: #cbd5e0;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
         }
 
         .form-group {
@@ -281,22 +207,44 @@
         }
 
         @media (max-width: 480px) {
-            .card {
+            .container {
                 padding: 20px;
                 margin: 10px;
             }
             
-            .title {
+            h1 {
                 font-size: 24px;
             }
         }
     </style>
 </head>
 <body>
-    <h1 class="title">🌉 USDHL (Wrapped $M Bridge)</h1>
-    
-    <!-- Wallet Connection Card -->
-    <div class="card">
+    <div class="container">
+        <h1>🌉 USDHL(Wrapped $M Bridge)</h1>
+        
+<!-- Navigation Link -->
+<div style="text-align: center; margin-bottom: 10px;">
+    <a href="bridge_to_eth.html" style="
+        display: inline-block;
+        background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+        color: white;
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(56, 161, 105, 0.3);
+    " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(56, 161, 105, 0.4)';" onmouseout="this.style.transform='translateY(0px)'; this.style.boxShadow='0 2px 8px rgba(56, 161, 105, 0.3)';">
+        🔄 Bridge back to Wrapped M Page
+    </a>
+</div>
+
+        <div class="contract-info">
+            <strong>Contract:</strong> <code>0x36f586A30502AE3afb555b8aA4dCc05d233c2ecE</code><br>
+            <strong>Bridge:</strong> Ethereum → HyperEVM
+        </div>
+
         <div class="wallet-section">
             <button id="connectWallet" class="connect-btn">Connect Wallet</button>
             <div id="walletInfo" class="wallet-info" style="display: none;">
@@ -304,35 +252,6 @@
                 <div><strong>Network:</strong> <span id="networkName"></span></div>
                 <div><strong>Wrapped $M Balance:</strong> <span id="tokenBalance">Loading...</span></div>
             </div>
-        </div>
-    </div>
-
-    <!-- Approval Card -->
-    <div class="card approval-card" id="approvalCard" style="display: none;">
-        <h2>🔐 Step 1: Token Approval</h2>
-        <div class="approval-info">
-            Before bridging, you need to approve the bridge contract to spend your Wrapped $M tokens.
-            <br><strong>Wrapped $M Contract:</strong> <code>0x437cc33344a0B27A429f795ff6B469C72698B291</code>
-            <br><strong>Bridge Contract:</strong> <code>0x36f586A30502AE3afb555b8aA4dCc05d233c2ecE</code>
-        </div>
-        
-        <div id="approvalStatus" class="approval-status needs-approval">
-            <span>⚠️</span>
-            <span>Checking approval status...</span>
-        </div>
-        
-        <button id="approveBtn" class="approve-btn" disabled>
-            Checking Approval Status...
-        </button>
-    </div>
-
-    <!-- Bridge Card -->
-    <div class="card bridge-card" id="bridgeCard" style="display: none;">
-        <h2>🌉 Step 2: Bridge Tokens</h2>
-        
-        <div class="contract-info">
-            <strong>Bridge Contract:</strong> <code>0x36f586A30502AE3afb555b8aA4dCc05d233c2ecE</code><br>
-            <strong>Route:</strong> Ethereum → HyperEVM
         </div>
 
         <form id="bridgeForm">
@@ -375,11 +294,11 @@
                 <div class="balance-info">Pre-filled with 0.0008 ETH</div>
             </div>
 
-            <button type="submit" id="bridgeBtn" class="bridge-btn" disabled>Approve Tokens First</button>
+            <button type="submit" id="bridgeBtn" class="bridge-btn" disabled>Connect Wallet First</button>
         </form>
-    </div>
 
-    <div id="status" class="status" style="display: none;"></div>
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
 
     <script>
         // Contract configuration
@@ -404,7 +323,7 @@
             }
         ];
 
-        // ERC20 ABI for balance checking and approval
+        // ERC20 ABI for balance checking
         const ERC20_ABI = [
             {
                 "constant": true,
@@ -419,24 +338,10 @@
                 "name": "decimals",
                 "outputs": [{"name": "", "type": "uint8"}],
                 "type": "function"
-            },
-            {
-                "constant": true,
-                "inputs": [{"name": "_owner", "type": "address"}, {"name": "_spender", "type": "address"}],
-                "name": "allowance",
-                "outputs": [{"name": "", "type": "uint256"}],
-                "type": "function"
-            },
-            {
-                "constant": false,
-                "inputs": [{"name": "_spender", "type": "address"}, {"name": "_value", "type": "uint256"}],
-                "name": "approve",
-                "outputs": [{"name": "", "type": "bool"}],
-                "type": "function"
             }
         ];
 
-        let provider, signer, contract, tokenContract, userAddress, currentBalance;
+        let provider, signer, contract, tokenContract, userAddress;
 
         // DOM elements
         const connectWalletBtn = document.getElementById('connectWallet');
@@ -451,10 +356,6 @@
         const amountInput = document.getElementById('amount');
         const recipientInput = document.getElementById('recipient');
         const refundAddressInput = document.getElementById('refundAddress');
-        const approvalCard = document.getElementById('approvalCard');
-        const bridgeCard = document.getElementById('bridgeCard');
-        const approveBtn = document.getElementById('approveBtn');
-        const approvalStatus = document.getElementById('approvalStatus');
 
         // Network switching function
         async function switchToEthereum() {
@@ -536,14 +437,14 @@
 
                 // Show wallet info and update button
                 walletInfo.style.display = 'block';
-                approvalCard.style.display = 'block';
                 connectWalletBtn.textContent = 'Wallet Connected ✓';
                 connectWalletBtn.disabled = true;
+                bridgeBtn.disabled = false;
+                bridgeBtn.textContent = 'Bridge Tokens';
                 maxBtn.style.display = 'block';
 
-                // Load token balance and check approval
+                // Load token balance
                 await loadTokenBalance();
-                await checkApprovalStatus();
                 
                 hideStatus();
 
@@ -556,9 +457,9 @@
         // Load token balance
         async function loadTokenBalance() {
             try {
-                currentBalance = await tokenContract.balanceOf(userAddress);
+                const balance = await tokenContract.balanceOf(userAddress);
                 const decimals = 6; // Wrapped $M uses 6 decimals
-                const balanceFormatted = ethers.utils.formatUnits(currentBalance, decimals);
+                const balanceFormatted = ethers.utils.formatUnits(balance, decimals);
                 tokenBalance.textContent = `${parseFloat(balanceFormatted).toFixed(6)} $M`;
                 
                 // Pre-fill amount with current balance if it's reasonable
@@ -572,101 +473,12 @@
             }
         }
 
-        // Check approval status
-        async function checkApprovalStatus() {
-            try {
-                const allowance = await tokenContract.allowance(userAddress, CONTRACT_ADDRESS);
-                
-                console.log('Current balance:', ethers.utils.formatUnits(currentBalance, 6));
-                console.log('Current allowance:', ethers.utils.formatUnits(allowance, 6));
-                
-                if (allowance.gte(currentBalance) && currentBalance.gt(0)) {
-                    // Sufficient approval
-                    approvalStatus.className = 'approval-status approved';
-                    approvalStatus.innerHTML = '<span>✅</span><span>Approved! You can now bridge your tokens</span>';
-                    approveBtn.textContent = 'Approval Complete ✓';
-                    approveBtn.disabled = true;
-                    bridgeCard.style.display = 'block';
-                    bridgeBtn.disabled = false;
-                    bridgeBtn.textContent = 'Bridge Tokens';
-                } else if (currentBalance.eq(0)) {
-                    // No tokens to approve
-                    approvalStatus.className = 'approval-status needs-approval';
-                    approvalStatus.innerHTML = '<span>⚠️</span><span>No Wrapped $M tokens found in wallet</span>';
-                    approveBtn.textContent = 'No Tokens to Approve';
-                    approveBtn.disabled = true;
-                } else {
-                    // Needs approval
-                    approvalStatus.className = 'approval-status needs-approval';
-                    approvalStatus.innerHTML = '<span>⚠️</span><span>Approval needed to proceed with bridging</span>';
-                    approveBtn.textContent = 'Approve Wrapped $M Spending';
-                    approveBtn.disabled = false;
-                    bridgeBtn.disabled = true;
-                    bridgeBtn.textContent = 'Approve Tokens First';
-                }
-            } catch (error) {
-                console.error('Error checking approval status:', error);
-                approvalStatus.className = 'approval-status needs-approval';
-                approvalStatus.innerHTML = '<span>❌</span><span>Error checking approval status</span>';
-            }
-        }
-
-        // Handle approval
-        approveBtn.addEventListener('click', async () => {
-            try {
-                showStatus('Preparing approval transaction...', 'loading');
-                approveBtn.disabled = true;
-                approveBtn.textContent = 'Processing...';
-
-                if (currentBalance.eq(0)) {
-                    throw new Error('No Wrapped $M tokens to approve');
-                }
-
-                // Create contract instance with signer for write operations
-                const tokenContractWithSigner = new ethers.Contract(WRAPPED_M_ADDRESS, ERC20_ABI, signer);
-                
-                showStatus('Sending approval transaction...', 'loading');
-
-                // Approve the full balance
-                const tx = await tokenContractWithSigner.approve(CONTRACT_ADDRESS, currentBalance);
-                
-                showStatus('Approval transaction sent! Waiting for confirmation...', 'loading');
-
-                // Wait for transaction confirmation
-                const receipt = await tx.wait();
-                
-                showStatus('Approval successful! You can now bridge your tokens.', 'success');
-                
-                // Refresh approval status
-                await checkApprovalStatus();
-
-            } catch (error) {
-                console.error('Approval error:', error);
-                let errorMessage = 'Approval failed';
-                
-                if (error.code === 4001) {
-                    errorMessage = 'Approval rejected by user';
-                } else if (error.message.includes('insufficient funds')) {
-                    errorMessage = 'Insufficient ETH for gas fees';
-                } else if (error.reason) {
-                    errorMessage = error.reason;
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-                
-                showStatus(errorMessage, 'error');
-                
-                // Reset button
-                approveBtn.disabled = false;
-                approveBtn.textContent = 'Approve Wrapped $M Spending';
-            }
-        });
-
         // Max button functionality
         maxBtn.addEventListener('click', async () => {
             try {
+                const balance = await tokenContract.balanceOf(userAddress);
                 const decimals = 6;
-                const balanceFormatted = ethers.utils.formatUnits(currentBalance, decimals);
+                const balanceFormatted = ethers.utils.formatUnits(balance, decimals);
                 amountInput.value = balanceFormatted;
             } catch (error) {
                 console.error('Error setting max amount:', error);
@@ -734,9 +546,8 @@
                 
                 showStatus(`Bridge successful! Transaction hash: ${receipt.transactionHash}`, 'success');
                 
-                // Reload balance and check approval status
+                // Reload balance
                 await loadTokenBalance();
-                await checkApprovalStatus();
 
             } catch (error) {
                 console.error('Bridge error:', error);
