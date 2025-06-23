@@ -15,3 +15,5 @@ NOTE : this is just something built by a hyperliquid community member to make it
 You can interact with the contract directly on etherescan at this address https://etherscan.io/address/0x36f586a30502ae3afb555b8aa4dcc05d233c2ece#writeProxyContract
 
 the front end just pre fills the fields to make things easier.
+
+Added a bridge back to Ethereum, link is on the index.html page
